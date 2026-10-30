@@ -1,0 +1,5 @@
+import type {Order,OrderStatus} from "../types";
+const states:OrderStatus[]=["New","Preparing","Ready","Completed"];
+export default function KitchenBoard({orders,onStatus}:{orders:Order[];onStatus:(id:string,s:OrderStatus)=>void}){
+ return <div className="kitchen"><h2>Kitchen orders</h2>{orders.length===0?<p className="muted">No orders yet.</p>:orders.map(o=><article className="order-card" key={o.id}><header><b>#{o.id.slice(-5)} · Table {o.table}</b><span>{new Date(o.createdAt).toLocaleTimeString()}</span></header>{o.items.map((x,i)=><div key={i}><b>{x.meal.name}</b><p>{x.portions.filter(p=>p.quantity>0).map(p=>{const ing=x.meal.ingredients.find(z=>z.id===p.ingredientId);return `${ing?.name} ×${p.quantity}`}).join(", ")}</p>{x.split&&<small>Split meal: second half separately customized</small>}{x.note&&<p className="note">Note: {x.note}</p>}</div>)}<strong>{o.total.toLocaleString()} DA · {o.payment}</strong><select value={o.status} onChange={e=>onStatus(o.id,e.target.value as OrderStatus)}>{states.map(s=><option key={s}>{s}</option>)}</select></article>)}</div>
+}

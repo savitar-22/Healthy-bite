@@ -1,0 +1,5 @@
+import type {MealSelection} from "../types";import {selectionPrice} from "../lib/pricing";import {Trash2} from "lucide-react";
+export default function Cart({items,table,onRemove,onOrder}:{items:MealSelection[];table:string;onRemove:(n:number)=>void;onOrder:()=>void}){
+ const total=items.reduce((s,x)=>s+selectionPrice(x),0);
+ return <aside className="cart"><h2>Your order</h2><p className="muted">Table {table}</p>{items.length===0?<p>Your basket is empty.</p>:items.map((x,n)=><div className="cart-item" key={n}><div><b>{x.meal.name}{x.split?" · split":""}</b><small>{x.portions.filter(p=>p.quantity>0).length} selected ingredients</small><strong>{Math.round(selectionPrice(x)).toLocaleString()} DA</strong></div><button onClick={()=>onRemove(n)}><Trash2 size={16}/></button></div>)}<div className="total"><span>Total</span><b>{Math.round(total).toLocaleString()} DA</b></div><button className="primary full" disabled={!items.length} onClick={onOrder}>Send order · Pay at cashier</button><small className="muted">Payment is made at the cashier. This demo does not charge online.</small></aside>
+}

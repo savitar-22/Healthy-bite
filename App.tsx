@@ -1,0 +1,21 @@
+import {useMemo,useState} from "react";import {Leaf,ShoppingBag,ChefHat,Settings,Plus,Minus} from "lucide-react";
+import {initialMenu} from "./data/menu";import type {Meal,MealSelection,Order,OrderStatus} from "./types";
+import MealCustomizer from "./components/MealCustomizer";import Cart from "./components/Cart";import KitchenBoard from "./components/KitchenBoard";
+import {selectionPrice} from "./lib/pricing";
+export default function App(){
+ const [menu,setMenu]=useState<Meal[]>(initialMenu),[selected,setSelected]=useState<Meal|null>(null),[items,setItems]=useState<MealSelection[]>([]),[orders,setOrders]=useState<Order[]>([]),[tab,setTab]=useState<"menu"|"kitchen"|"admin">("menu");
+ const [table]=useState(new URLSearchParams(location.search).get("table")||"01");
+ const categories=useMemo(()=>["All",...Array.from(new Set(menu.map(m=>m.category)))],[menu]);const [category,setCategory]=useState("All");
+ const visible=menu.filter(m=>category==="All"||m.category===category);
+ const total=items.reduce((s,x)=>s+selectionPrice(x),0);
+ const submit=()=>{const order:Order={id:crypto.randomUUID(),table,items,total:Math.round(total),status:"New",createdAt:new Date().toISOString(),payment:"At cashier"};setOrders(old=>[order,...old]);setItems([]);alert(`Order sent! Your order number is ${order.id.slice(-5)}. Please pay at the cashier.`)};
+ const status=(id:string,s:OrderStatus)=>setOrders(old=>old.map(o=>o.id===id?{...o,status:s}:o));
+ const updatePrice=(id:string,price:number)=>setMenu(old=>old.map(m=>m.id===id?{...m,basePrice:Math.max(0,price)}:m));
+ return <div className="app"><header className="topbar"><div className="brand"><span className="brand-icon"><Leaf/></span><div><b>Healthy Bite</b><small>Happy Life</small></div></div><nav><button className={tab==="menu"?"nav-active":""} onClick={()=>setTab("menu")}><ShoppingBag size={17}/> Menu</button><button className={tab==="kitchen"?"nav-active":""} onClick={()=>setTab("kitchen")}><ChefHat size={17}/> Kitchen</button><button className={tab==="admin"?"nav-active":""} onClick={()=>setTab("admin")}><Settings size={17}/> Admin</button></nav><span className="table-pill">TABLE {table}</span></header>
+ {tab==="menu"&&<><section className="hero"><div><span className="eyebrow">FRESH · BALANCED · MADE FOR YOU</span><h1>Eat well.<br/><em>Feel good.</em></h1><p>Build a meal that fits your taste, your appetite and your day.</p><a href="#menu" className="primary link-button">Explore menu</a></div></section><main className="layout" id="menu"><section className="menu-area"><div className="section-title"><div><span className="eyebrow">OUR MENU</span><h2>Choose your bite</h2></div><span className="muted">{menu.length} meals</span></div><div className="chips">{categories.map(c=><button className={category===c?"chip active":"chip"} onClick={()=>setCategory(c)} key={c}>{c}</button>)}</div><div className="meal-grid">{visible.map(m=><article className="meal-card" key={m.id}><img src={m.image}/><div className="meal-info"><span className="tag">{m.category}</span><h3>{m.name}</h3><p>{m.description}</p><footer><b>{m.basePrice.toLocaleString()} DA</b><button className="round-add" onClick={()=>setSelected(m)}><Plus/></button></footer></div></article>)}</div></section><Cart items={items} table={table} onRemove={n=>setItems(old=>old.filter((_,i)=>i!==n))} onOrder={submit}/></main></>}
+ {tab==="kitchen"&&<main className="dashboard"><KitchenBoard orders={orders} onStatus={status}/></main>}
+ {tab==="admin"&&<main className="dashboard"><h1>Menu management</h1><p className="muted">Demo admin controls. Add secure authentication before public launch.</p>{menu.map(m=><div className="admin-row" key={m.id}><div><b>{m.name}</b><small>{m.category}</small></div><label>Price (DA)<input type="number" min="0" value={m.basePrice} onChange={e=>updatePrice(m.id,Number(e.target.value))}/></label><button className="secondary" onClick={()=>setSelected(m)}>Edit ingredients</button></div>)}</main>}
+ <footer className="site-footer">Healthy Bite · Happy Life <span>Fresh choices, happier days.</span></footer>
+ {selected&&<MealCustomizer meal={selected} onClose={()=>setSelected(null)} onAdd={s=>{setItems(old=>[...old,s]);setSelected(null)}}/>}
+ </div>
+}
